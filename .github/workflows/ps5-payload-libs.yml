@@ -2,8 +2,6 @@ name: ps5-payload-libs
 
 on:
   push:
-    tags:
-      - '*'
   workflow_dispatch:
 
 concurrency:
@@ -13,6 +11,8 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-24.04
+    permissions:
+      contents: write
     steps:
 
     - name: Checkout
@@ -32,7 +32,17 @@ jobs:
     - name: Package Libs
       run: tar -czf ps5-payload-libs.tar.gz -C / opt/ps5-payload-sdk
 
+    - name: Upload Libs (Release)
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: |
+          gh release create ${{ github.run_id }} \
+          "./ps5-payload-libs.tar.gz" \
+          --target ${{ GITHUB.SHA }} -t "${{ github.run_id }}" \
+          --prerelease
+
     - name: Upload Libs
+      if: false
       uses: actions/upload-artifact@v4
       with:
         name: ps5-payload-libs
